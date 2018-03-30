@@ -43,15 +43,18 @@ def rgb_to_components(rgb_image, bits_per_pixel = 24):
     return components
 
 
-def preprocess(path):
+def preprocess(path, width=128, height=128, bits_per_pixel=24):
     image = load(path)
-    rescaled_image = rescale(image)
-    components = rgb_to_components(rescaled_image)
+    rescaled_image = rescale(image, width, height)
+    components = rgb_to_components(rescaled_image, bits_per_pixel)
     return components
 
 
-def wavelet_transform(data2D, type='db4'):
-    return pywt.wavedec2(data2D, type)
+def wavelet_transform(data3D, type='db4'):
+    coefficients = [pywt.wavedec2(data3D[0], type),
+                    pywt.wavedec2(data3D[1], type),
+                    pywt.wavedec2(data3D[2], type)]
+    return coefficients
 
 
 def main():
