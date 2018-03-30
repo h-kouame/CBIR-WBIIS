@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import pywt
 
 
 def load(path='../Data/image.orig/121.jpg'):
@@ -27,28 +28,40 @@ def rgb_to_components(rgb_image, bits_per_pixel = 24):
     max_pixel_value = pow(2, bits_per_pixel)
     dimensions = rgb_image.shape
     height, width = dimensions[0], dimensions[1]
-    components_image = np.zeros((3, height, width))
-    # C1[x][y] = components_image[0][x][y] = np.mean(rgb_image[x][y])
-    components_image[0][:][:] = np.mean(rgb_image[:][:], 2)
+    components = np.zeros((3, height, width))
+    # C1[x][y] = components[0][x][y] = np.mean(rgb_image[x][y])
+    components[0][:][:] = np.mean(rgb_image[:][:], 2)
     for x in range(height):
         for y in range(width):
-            # components_image[0][x][y] = np.mean(rgb_image[x][y])
+            # components[0][x][y] = np.mean(rgb_image[x][y])
             # C2[x][y]
-            components_image[1][x][y] = (rgb_image[x][y][0] + max_pixel_value - rgb_image[x][y][2]) / 2
+            components[1][x][y] = (rgb_image[x][y][0] + max_pixel_value - rgb_image[x][y][2]) / 2
             # C3[x][y]
-            components_image[2][x][y] = (rgb_image[x][y][0] +
+            components[2][x][y] = (rgb_image[x][y][0] +
                                          2 * (max_pixel_value - rgb_image[x][y][1]) +
                                          rgb_image[x][y][2]) / 4
-    return components_image
+    return components
+
+
+def preprocess(path):
+    image = load(path)
+    rescaled_image = rescale(image)
+    components = rgb_to_components(rescaled_image)
+    return components
+
+
+def wavelet_transform(data2D, type='db4'):
+    return pywt.wavedec2(data2D, type)
 
 
 def main():
     image = load()
-    display(image)
-    rescaled_image = rescale(image, 2, 2)
+    # display(image)
+    rescaled_image = rescale(image, 3, 3)
     # print "rgb values"
     # print rescaled_image
-    # components_image = rgb_to_components(rescaled_image)
+    components = rgb_to_components(rescaled_image)
+    # print coeffs
     # print "component values"
     # print components_image
     # display(rescaled_image)
@@ -57,6 +70,5 @@ def main():
 
 
 if __name__ == '__main__':
-    if __name__ == '__main__':
         main()
 
