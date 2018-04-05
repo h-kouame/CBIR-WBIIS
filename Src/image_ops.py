@@ -1,15 +1,22 @@
 import numpy as np
 import cv2
 import pywt
+from PIL import Image
 
 
-def load(path='../Data/image.orig/121.jpg'):
+def load(path='../Data/image.orig/807.jpg'):
     image = cv2.imread(path)
     return image
 
 
 def display(image, name='image'):
     cv2.imshow(name, image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+def display_component(component, name='component'):
+    cv2.imshow(name, component)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -50,20 +57,52 @@ def preprocess(path, width=128, height=128, bits_per_pixel=24):
     return components
 
 
-def wavelet_transform(data3D, type='db4'):
-    coefficients = [pywt.wavedec2(data3D[0], type),
-                    pywt.wavedec2(data3D[1], type),
-                    pywt.wavedec2(data3D[2], type)]
-    return coefficients
+def wavelet_transform(data3D, w_type='db8', cutoff=16):
+    C1, C2, C3 = data3D[0], data3D[1], data3D[2]
+    # get the wavelet coefficients
+    coeff_C1 = pywt.wavedec2(C1, wavelet=w_type)
+    coeff_C2 = pywt.wavedec2(C2, wavelet=w_type)
+    coeff_C3 = pywt.wavedec2(C3, wavelet=w_type)
+    # get the wavelet approximation of the 4th level
+    W1, W2, W3 = coeff_C1[0], coeff_C2[0], coeff_C3[0]
+    # throw away the 3rd level details
+    details1, details2, details3 = coeff_C1[1], coeff_C2[1], coeff_C3[1]
+    # get the 16x16 upper left coefficients & Throw away higher coefficients
+    # lower_W1 = [[entire_W1[0][i][j] for j in range(cutoff)]
+    #                     for i in range(cutoff)]
+    # lower_W2 = [[entire_W2[0][i][j] for j in range(cutoff)]
+    #             for i in range(cutoff)]
+    # lower_W3 = [[entire_W3[i][j] for j in range(cutoff)]
+    #             for i in range(cutoff)]
+    #
+    # coefficients = [lower_W1, lower_W2, lower_W3]
+    # return coefficients
+    # W1 <==> 8x8 & W1 + details1 <==> 16x16 but are currently 29x29 and 58x58
+    return [[W1, W2, W3], [details1, details2, details3]]
+
+
+def standard_dev(data):
+    W1, W2, W3 = data[0], data[1], data[2]
+    return [np.std(W1), np.std(W2), np.std(W3)]
+
+
+def image_from_array(data):
+    image = Image.fromarray(data)
+    return image
 
 
 def main():
     image = load()
     # display(image)
-    rescaled_image = rescale(image, 3, 3)
+    rescaled_image = rescale(image, 128, 128)
     # print "rgb values"
     # print rescaled_image
     components = rgb_to_components(rescaled_image)
+    wt = wavelet_transform(components)
+    # print len(wt[0])
+    # display(image)
+    # c = np.array(components[1])
+    # print c
     # print coeffs
     # print "component values"
     # print components_image
