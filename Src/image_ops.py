@@ -9,10 +9,15 @@ def load(path='../Data/image.orig/807.jpg'):
     return image
 
 
-def display(image, name='image'):
-    cv2.imshow(name, image)
+def display(image, frame_name='image'):
+    cv2.imshow(frame_name, image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+
+def display_image(path, frame_name):
+    image = load(path)
+    display(image, frame_name)
 
 
 def display_component(component, name='component'):
@@ -74,16 +79,46 @@ def wavelet_transform(data3D, w_type='db8', cutoff=16):
     #             for i in range(cutoff)]
     # lower_W3 = [[entire_W3[i][j] for j in range(cutoff)]
     #             for i in range(cutoff)]
-    #
+
     # coefficients = [lower_W1, lower_W2, lower_W3]
     # return coefficients
     # W1 <==> 8x8 & W1 + details1 <==> 16x16 but are currently 29x29 and 58x58
     return [[W1, W2, W3], [details1, details2, details3]]
 
 
+def rearrange_wt(wt):
+    cA = {"C1": wt[0][0], "C2": wt[0][1], "C3": wt[0][2]}
+    cH = {"C1":wt[1][0][0], "C2":wt[1][1][0], "C3":wt[1][2][0]}
+    cV = {"C1": wt[1][0][1], "C2": wt[1][1][1], "C3": wt[1][2][1]}
+    cD = {"C1": wt[1][0][2], "C2": wt[1][1][2], "C3": wt[1][2][2]}
+    return {"cA": cA, "cH": cH, "cV": cV, "cD": cD}
+
+
 def standard_dev(data):
     W1, W2, W3 = data[0], data[1], data[2]
     return [np.std(W1), np.std(W2), np.std(W3)]
+
+
+def form_feature_vector(components):
+    wt = wavelet_transform(components)
+    upper_left = get_upper_left_coefficients(wt)
+    std = standard_dev(upper_left)
+    return [std, wt]
+
+
+# def join_coefficients(wt):
+#     height = len(wt[0][0]) + len(wt[1][0])
+#     width = len(wt[0][0][0]) + len(wt[1][0][0])
+#     components = np.zeros((3, height, width))
+#
+#     for c in range(3):
+#         W = wt[0][c]
+#         details = wt[1][c]
+#         for
+
+
+def get_upper_left_coefficients(coefficients):
+    return coefficients[0]
 
 
 def image_from_array(data):
@@ -99,7 +134,7 @@ def main():
     # print rescaled_image
     components = rgb_to_components(rescaled_image)
     wt = wavelet_transform(components)
-    # print len(wt[0])
+    print wt[0][0]
     # display(image)
     # c = np.array(components[1])
     # print c
