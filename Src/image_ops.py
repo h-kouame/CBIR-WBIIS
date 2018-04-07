@@ -4,7 +4,7 @@ import pywt
 from PIL import Image
 
 
-def load(path='../Data/image.orig/807.jpg'):
+def load(path='../Data/image.orig - original/400.jpg'):
     image = cv2.imread(path)
     return image
 
@@ -55,7 +55,7 @@ def rgb_to_components(rgb_image, bits_per_pixel = 24):
     return components
 
 
-def preprocess(path, width=128, height=128, bits_per_pixel=24):
+def preprocess(path='../Data/image.orig - original/400.jpg', width=128, height=128, bits_per_pixel=24):
     image = load(path)
     rescaled_image = rescale(image, width, height)
     components = rgb_to_components(rescaled_image, bits_per_pixel)
@@ -103,7 +103,8 @@ def form_feature_vector(components):
     wt = wavelet_transform(components)
     upper_left = get_upper_left_coefficients(wt)
     std = standard_dev(upper_left)
-    return [std, wt]
+    temp = rearrange_wt(wt)
+    return {'std': std, 'wt':temp}
 
 
 # def join_coefficients(wt):

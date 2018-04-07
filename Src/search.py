@@ -2,35 +2,23 @@ import image_ops as ops
 import operator
 
 
-def query(db_std, base_dir='../Data/image.orig/', imagename='807.jpg', width=128, height=128, bits_per_pixel=24, percent=50):
-    path = base_dir + imagename
-    components = ops.preprocess(path, width, height, bits_per_pixel)
-    wt = ops.wavelet_transform(components, w_type='db8')
-    upper_left = ops.get_upper_left_coefficients(wt)
-    q_std = ops.standard_dev(upper_left)
-    matches = compare_std(db_std, q_std, percent)
-    return matches
-
-
-
 # def compare_std(query_std, candidate_std):
 #     q_std1, q_std2, q_std3 = query_std[0], query_std[1], query_std[2]
 #     c_std1, c_std2, c_std = candidate_std[0], candidate_std[1], candidate_std[2]
 
 
-def compare_std(db_std, query_std, percent=50):
+def std_search(db_std, query_std, percent=50):
     beta = 1 - percent/100.0
     print beta
     q_std1, q_std2, q_std3 = query_std[0], query_std[1], query_std[2]
-    indexes = []
-    for i in range(len(db_std)):
-        db_std1, db_std2, db_std3 = db_std[i][0], db_std[i][1], db_std[i][2]
-        if (q_std1*beta < db_std1 and db_std1 < q_std1/beta) or \
-           ((q_std2*beta < db_std2 and db_std2 < q_std2/beta) and \
-            (q_std3*beta < db_std3 and db_std3 < q_std3/beta)):
-
-             indexes.append(i)
-    return indexes
+    imagenames = db_std.keys()
+    output_images = []
+    for name in imagenames:
+        db_std1, db_std2, db_std3 = db_std[name][0], db_std[name][1], db_std[name][2]
+        if (q_std1*beta < db_std1 < q_std1/beta) or \
+           ((q_std2*beta < db_std2 < q_std2/beta) and (q_std3*beta < db_std3 < q_std3/beta)):
+            output_images.append(name)
+    return output_images
 
 
 # wt format
