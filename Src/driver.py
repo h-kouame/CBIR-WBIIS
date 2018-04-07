@@ -15,24 +15,17 @@ def load_db_std(base_dir='../Database/', filename='standard_deviation.csv'):
 
 
 def load_wt(path='../Database/Wavelets/807.csv'):
-    wt = {'cA': {'C1': [], 'C2': [], 'C3': []},
-          'cH': {'C1': [], 'C2': [], 'C3': []},
-          'cV': {'C1': [], 'C2': [], 'C3': []},
-          'cD': {'C1': [], 'C2': [], 'C3': []}}
+    wt = {'C1': [], 'C2': [], 'C3': []}
     with open(path, 'r') as f:
         lines = f.readlines()
-    coeff_names = ['cA', 'cH', 'cV', 'cD']
     comp_names = ['C1', 'C2', 'C3']
     for line in lines:
         line = line.strip('\n')
-        if line in coeff_names:
-            coeff_name = line
-            continue
         if line in comp_names:
             comp_name = line
             continue
     # [:-1] trim last empty element
-        wt[coeff_name][comp_name].append(line.split(',')[:-1])
+        wt[comp_name].append(line.split(',')[:-1])
 
     return wt
 
@@ -66,10 +59,11 @@ def clean_line(line):
 
 def main():
     base_dir = '../Data/image.orig - original/'
-    query_image = '1.jpg'
+    # base_dir = '../Data/image.orig/'
+    query_image = '800.jpg'
     path = base_dir + query_image
     query_components = ops.preprocess(path, width=128, height=128, bits_per_pixel=24)
-    query_features = ops.form_feature_vector(query_components)
+    query_features = ops.form_feature_vector(query_components, w_type='db8')
     query_std = query_features['std']
     query_wt = query_features['wt']
 
@@ -82,7 +76,7 @@ def main():
     # db_wt = load_db_wt()
     db_wt = load_images_wt(first_matches)
     distances = s.compute_distances(query_wt, db_wt)
-    matches = s.get_matches(distances, 100)
+    matches = s.get_matches(distances, 20)
     for imagename in matches:
         imagepath = base_dir + imagename
         print imagename

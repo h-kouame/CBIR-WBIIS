@@ -1,4 +1,3 @@
-import image_ops as ops
 import operator
 
 
@@ -22,22 +21,16 @@ def std_search(db_std, query_std, percent=50):
 
 
 # wt format
-# wt = {'cA': {'C1': [], 'C2': [], 'C3': []},
-#       'cH': {'C1': [], 'C2': [], 'C3': []},
-#       'cV': {'C1': [], 'C2': [], 'C3': []},
-#       'cD': {'C1': [], 'C2': [], 'C3': []}}
 def compute_distance(query_wt, candidate_wt):
-    coeff_names = query_wt.keys()
-    comp_names = query_wt[coeff_names[0]].keys()
+    comp_names = query_wt.keys()
     distance = 0
-    for coeff_name in coeff_names:
-        for comp_name in comp_names:
-            q_weights = query_wt[coeff_name][comp_name]
-            c_weights = candidate_wt[coeff_name][comp_name]
-            height, width = len(q_weights), len(q_weights[0])
-            for y in range(height):
-                for x in range(width):
-                    distance = distance + abs(float(q_weights[y][x]) - float(c_weights[y][x]))
+    for comp_name in comp_names:
+        q_weights = query_wt[comp_name]
+        c_weights = candidate_wt[comp_name]
+        height, width = len(q_weights), len(q_weights[0])
+        for y in range(height):
+            for x in range(width):
+                distance = distance + abs(float(q_weights[y][x]) - float(c_weights[y][x]))
     return distance
 
 

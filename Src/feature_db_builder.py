@@ -66,21 +66,16 @@ def save_wt(coefficients, base_dir='../Database/Wavelets/'):
     for imagename in imagenames:
         path = base_dir + imagename[:-3] + "csv"
         wt = coefficients[imagename]
-        data = ops.rearrange_wt(wt)
         stream = ''
-        coeff_names = data.keys()
-        for coeff_name in coeff_names:
-            stream = stream + coeff_name + '\n'
-            components = data[coeff_name]
-            comp_names = components.keys()
-            for comp_name in comp_names:
-                stream = stream + comp_name + '\n'
-                component_weights = components[comp_name]
-                height, width = len(component_weights), len(component_weights[0])
-                for y in range(height):
-                    for x in range(width):
-                        stream = stream + str(component_weights[y][x]) + ','
-                    stream = stream + '\n'
+        comp_names = wt.keys()
+        for comp_name in comp_names:
+            stream = stream + comp_name + '\n'
+            component_weights = wt[comp_name]
+            height, width = len(component_weights), len(component_weights[0])
+            for y in range(height):
+                for x in range(width):
+                    stream = stream + str(component_weights[y][x]) + ','
+                stream = stream + '\n'
 
         if os.path.isfile(path):
             os.remove(path)
@@ -90,10 +85,11 @@ def save_wt(coefficients, base_dir='../Database/Wavelets/'):
 
 def main():
     components = preprocess(base_dir='../Data/image.orig - original/')
+    # components = preprocess(base_dir='../Data/image.orig/')
     wt = wavelet_transform(components)
     save_wt(wt)
-    ul = get_upper_left_coefficients(wt)
-    std = standard_dev(ul)
+    # ul = get_upper_left_coefficients(wt)
+    std = standard_dev(wt)
     save_std(std, filename='standard_deviation.csv')
 
 
