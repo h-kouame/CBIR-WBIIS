@@ -65,8 +65,9 @@ def clean_line(line):
 
 
 def main():
-    base_dir = '../Data/image.orig - original/'
-    query_image = '1.jpg'
+    base_dir = '../Data/image.orig/'
+    # base_dir = '../Data/image.orig - original/'
+    query_image = '204.jpg'
     path = base_dir + query_image
     query_components = ops.preprocess(path, width=128, height=128, bits_per_pixel=24)
     query_features = ops.form_feature_vector(query_components)
@@ -82,7 +83,7 @@ def main():
     # db_wt = load_db_wt()
     db_wt = load_images_wt(first_matches)
     distances = s.compute_distances(query_wt, db_wt)
-    matches = s.get_matches(distances, 100)
+    matches = s.get_matches(distances, 10)
     for imagename in matches:
         imagepath = base_dir + imagename
         print imagename

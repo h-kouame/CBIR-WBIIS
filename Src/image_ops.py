@@ -62,12 +62,12 @@ def preprocess(path='../Data/image.orig - original/400.jpg', width=128, height=1
     return components
 
 
-def wavelet_transform(data3D, w_type='db8', cutoff=16):
+def wavelet_transform(data3D, w_type='db8', mode='per', level=3):
     C1, C2, C3 = data3D[0], data3D[1], data3D[2]
     # get the wavelet coefficients
-    coeff_C1 = pywt.wavedec2(C1, wavelet=w_type)
-    coeff_C2 = pywt.wavedec2(C2, wavelet=w_type)
-    coeff_C3 = pywt.wavedec2(C3, wavelet=w_type)
+    coeff_C1 = pywt.wavedec2(C1, wavelet=w_type, mode=mode, level=level)
+    coeff_C2 = pywt.wavedec2(C2, wavelet=w_type, mode=mode, level=level)
+    coeff_C3 = pywt.wavedec2(C3, wavelet=w_type, mode=mode, level=level)
     # get the wavelet approximation of the 4th level
     W1, W2, W3 = coeff_C1[0], coeff_C2[0], coeff_C3[0]
     # throw away the 3rd level details

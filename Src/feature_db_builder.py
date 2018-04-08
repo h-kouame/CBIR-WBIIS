@@ -89,7 +89,8 @@ def save_wt(coefficients, base_dir='../Database/Wavelets/'):
 
 
 def main():
-    components = preprocess(base_dir='../Data/image.orig - original/')
+    components = preprocess(base_dir='../Data/image.orig/')
+    # components = preprocess(base_dir='../Data/image.orig - original/')
     wt = wavelet_transform(components)
     save_wt(wt)
     ul = get_upper_left_coefficients(wt)
