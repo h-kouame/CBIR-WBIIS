@@ -1,6 +1,9 @@
 import image_ops as ops
 import os
-import numpy as np
+import sys
+import getopt
+import time
+import gc
 
 
 def preprocess(base_dir="../Data/image.orig/", width=128, height=128, bits_per_pixel=24):
@@ -10,12 +13,12 @@ def preprocess(base_dir="../Data/image.orig/", width=128, height=128, bits_per_p
     return components
 
 
-def wavelet_transform(components):
+def wavelet_transform(components, w_type='db8', mode='per', level=3):
     coefficients = {}
     imagenames = components.keys()
     for name in imagenames:
         C = components[name]
-        coefficients[name] = ops.wavelet_transform(C)
+        coefficients[name] = ops.wavelet_transform(C, w_type, mode, level)
     return coefficients
 
 
@@ -61,10 +64,13 @@ def save_std(std, filename='standard_deviation.csv', base_dir='../Database/'):
         f.write(stream)
 
 
-def save_wt(coefficients, base_dir='../Database/Wavelets/'):
+def save_wt(coefficients, base_dir='../Database/'):
+    wt_dir = base_dir + 'Wavelets/'
+    if not os.path.exists(wt_dir):
+        os.makedirs(wt_dir)
     imagenames = coefficients.keys()
     for imagename in imagenames:
-        path = base_dir + imagename[:-3] + "csv"
+        path = wt_dir + imagename[:-3] + "csv"
         wt = coefficients[imagename]
         data = ops.rearrange_wt(wt)
         stream = ''
@@ -88,17 +94,53 @@ def save_wt(coefficients, base_dir='../Database/Wavelets/'):
             f.write(stream)
 
 
-def main():
-    components = preprocess(base_dir='../Data/image.orig/')
-    # components = preprocess(base_dir='../Data/image.orig - original/')
-    wt = wavelet_transform(components)
-    save_wt(wt)
+def main(argv):
+    height = 128
+    width = 128
+    # image_db_path = '../Data/image.orig - original/'
+    image_db_path = '../Data/image.orig/'
+    out_wt_dir = '../Database/'
+    pixel_depth = 24
+    try:
+        opts, args = getopt.getopt(argv, "hi:y:x:d:o:", ["idb=", "ydim=", "xdim=", "pdepth=" "odb="])
+    except getopt.GetoptError:
+        print 'build.py -i <database path> -y <height> -x <width> -o <output feature directory>'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'build.py -i <database path> -y <height> -x <width> -o <output feature directory>'
+            sys.exit()
+        elif opt in ("-i", "--idb"):
+            image_db_path = arg
+        elif opt in ("-y", "--ydim"):
+            height = int(arg)
+        elif opt in ("-x", "--xdim"):
+            width = int(arg)
+        elif opt in ("-x", "--pdepth"):
+            pixel_depth = int(arg)
+        elif opt in ("-o", "--odb"):
+            out_wt_dir = arg
+
+    components = preprocess(base_dir=image_db_path, width=width, height=height, bits_per_pixel=pixel_depth)
+    if gc.isenabled():
+        gc.disable()
+    tic = time.time()
+    wt = wavelet_transform(components, w_type="db8", mode="per", level=3)
+    toc = time.time() - tic
+    print "Wavelet transform computation took: ", toc, " seconds"
+    gc.enable()
+    save_wt(wt, base_dir=out_wt_dir)
     ul = get_upper_left_coefficients(wt)
     std = standard_dev(ul)
-    save_std(std, filename='standard_deviation.csv')
+    save_std(std, filename='standard_deviation.csv', base_dir=out_wt_dir)
 
 
 if __name__ == '__main__':
-    main()
-
+    if gc.isenabled():
+        gc.disable()
+    tic = time.time()
+    main(sys.argv[1:])
+    toc = time.time() - tic
+    print "Feature vector computation and storing took: ", toc, " seconds"
+    gc.enable()
 

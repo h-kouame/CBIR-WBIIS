@@ -1,4 +1,3 @@
-import image_ops as ops
 import operator
 
 

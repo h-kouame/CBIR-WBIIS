@@ -65,17 +65,18 @@ def clean_line(line):
 
 
 def main():
-    base_dir = '../Data/image.orig/'
-    # base_dir = '../Data/image.orig - original/'
-    query_image = '204.jpg'
+    # base_dir = '../Data/image.orig/'
+    base_dir = '../Data/image.orig - original/'
+    # base_dir = '../Data/image.vary.jpg/'
+    query_image = '400.jpg'
     path = base_dir + query_image
-    query_components = ops.preprocess(path, width=128, height=128, bits_per_pixel=24)
-    query_features = ops.form_feature_vector(query_components)
+    query_components = ops.preprocess(path, width=256, height=256, bits_per_pixel=24)
+    query_features = ops.form_feature_vector(query_components, level=4)
     query_std = query_features['std']
     query_wt = query_features['wt']
 
     db_std = load_db_std()
-    percent = 50
+    percent = 60
     first_matches = s.std_search(db_std, query_std, percent=percent)
     print "number of matches on stage 1:", ' ', len(first_matches)
     print first_matches
@@ -83,7 +84,7 @@ def main():
     # db_wt = load_db_wt()
     db_wt = load_images_wt(first_matches)
     distances = s.compute_distances(query_wt, db_wt)
-    matches = s.get_matches(distances, 10)
+    matches = s.get_matches(distances, 100)
     for imagename in matches:
         imagepath = base_dir + imagename
         print imagename

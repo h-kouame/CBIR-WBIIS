@@ -30,13 +30,13 @@ def save(image, path='../Output/out.jpg'):
     cv2.imwrite(path, image)
 
 
-def rescale(image_in, width = 128, height = 128):
+def rescale(image_in, width=256, height=256):
     # Bipolar interpolation: experiment with CV_INTER_AREA
     image_out = cv2.resize(image_in, (width, height), 0, 0)
     return image_out
 
 
-def rgb_to_components(rgb_image, bits_per_pixel = 24):
+def rgb_to_components(rgb_image, bits_per_pixel=24):
     max_pixel_value = pow(2, bits_per_pixel)
     dimensions = rgb_image.shape
     height, width = dimensions[0], dimensions[1]
@@ -55,14 +55,14 @@ def rgb_to_components(rgb_image, bits_per_pixel = 24):
     return components
 
 
-def preprocess(path='../Data/image.orig - original/400.jpg', width=128, height=128, bits_per_pixel=24):
+def preprocess(path='../Data/image.orig - original/400.jpg', width=256, height=256, bits_per_pixel=24):
     image = load(path)
     rescaled_image = rescale(image, width, height)
     components = rgb_to_components(rescaled_image, bits_per_pixel)
     return components
 
 
-def wavelet_transform(data3D, w_type='db8', mode='per', level=3):
+def wavelet_transform(data3D, w_type='db8', mode='per', level=4):
     C1, C2, C3 = data3D[0], data3D[1], data3D[2]
     # get the wavelet coefficients
     coeff_C1 = pywt.wavedec2(C1, wavelet=w_type, mode=mode, level=level)
@@ -72,17 +72,6 @@ def wavelet_transform(data3D, w_type='db8', mode='per', level=3):
     W1, W2, W3 = coeff_C1[0], coeff_C2[0], coeff_C3[0]
     # throw away the 3rd level details
     details1, details2, details3 = coeff_C1[1], coeff_C2[1], coeff_C3[1]
-    # get the 16x16 upper left coefficients & Throw away higher coefficients
-    # lower_W1 = [[entire_W1[0][i][j] for j in range(cutoff)]
-    #                     for i in range(cutoff)]
-    # lower_W2 = [[entire_W2[0][i][j] for j in range(cutoff)]
-    #             for i in range(cutoff)]
-    # lower_W3 = [[entire_W3[i][j] for j in range(cutoff)]
-    #             for i in range(cutoff)]
-
-    # coefficients = [lower_W1, lower_W2, lower_W3]
-    # return coefficients
-    # W1 <==> 8x8 & W1 + details1 <==> 16x16 but are currently 29x29 and 58x58
     return [[W1, W2, W3], [details1, details2, details3]]
 
 
@@ -99,23 +88,12 @@ def standard_dev(data):
     return [np.std(W1), np.std(W2), np.std(W3)]
 
 
-def form_feature_vector(components):
-    wt = wavelet_transform(components)
+def form_feature_vector(components, level=3):
+    wt = wavelet_transform(components, level=level)
     upper_left = get_upper_left_coefficients(wt)
     std = standard_dev(upper_left)
     temp = rearrange_wt(wt)
     return {'std': std, 'wt':temp}
-
-
-# def join_coefficients(wt):
-#     height = len(wt[0][0]) + len(wt[1][0])
-#     width = len(wt[0][0][0]) + len(wt[1][0][0])
-#     components = np.zeros((3, height, width))
-#
-#     for c in range(3):
-#         W = wt[0][c]
-#         details = wt[1][c]
-#         for
 
 
 def get_upper_left_coefficients(coefficients):
