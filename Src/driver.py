@@ -1,95 +1,108 @@
+import setup
+import image_ops as ops
 import search as s
 import os
-import image_ops as ops
+import sys
+import getopt
+import shutil
+import time
+import gc
 
 
-def load_db_std(base_dir='../Database/', filename='standard_deviation.csv'):
-    path = base_dir + filename
-    std_dev = {}
-    with open(path, 'r') as f:
-        lines = f.readlines()
-    for line in lines:
-        temp = line.split(',')
-        std_dev[temp[0]] = clean_line(temp[1:])
-    return std_dev
-
-
-def load_wt(path='../Database/Wavelets/807.csv'):
-    wt = {'cA': {'C1': [], 'C2': [], 'C3': []},
-          'cH': {'C1': [], 'C2': [], 'C3': []},
-          'cV': {'C1': [], 'C2': [], 'C3': []},
-          'cD': {'C1': [], 'C2': [], 'C3': []}}
-    with open(path, 'r') as f:
-        lines = f.readlines()
-    coeff_names = ['cA', 'cH', 'cV', 'cD']
-    comp_names = ['C1', 'C2', 'C3']
-    for line in lines:
-        line = line.strip('\n')
-        if line in coeff_names:
-            coeff_name = line
-            continue
-        if line in comp_names:
-            comp_name = line
-            continue
-    # [:-1] trim last empty element
-        wt[coeff_name][comp_name].append(line.split(',')[:-1])
-
-    return wt
-
-
-def load_db_wt(base_dir='../Database/Wavelets/'):
-    wts = {}
-    for filename in os.listdir(base_dir):
-        wt = load_wt(base_dir + filename)
-        imagename = filename[:-3] + 'jpg'
-        wts[imagename] = wt
-    return wts
-
-
-def load_images_wt(imagenames, base_dir='../Database/Wavelets/'):
-    wts = {}
-    for name in imagenames:
-        path = base_dir + name[:-3] + 'csv'
-        wt = load_wt(path)
-        wts[name] = wt
-    return wts
-
-
-def clean_line(line):
-    new_line = []
-    for elt in line:
-        elt = elt.strip()
-        elt = elt.strip('\n')
-        new_line.append(float(elt))
-    return new_line
-
-
-def main():
-    # base_dir = '../Data/image.orig/'
-    base_dir = '../Data/image.orig - original/'
-    # base_dir = '../Data/image.vary.jpg/'
+def main(argv):
+    image_db_dir = '../Data/image.orig/'
+    feature_dir = '../Database/'
+    # image_db_dir = '../Data/image.orig - original/'
     query_image = '400.jpg'
-    path = base_dir + query_image
-    query_components = ops.preprocess(path, width=256, height=256, bits_per_pixel=24)
-    query_features = ops.form_feature_vector(query_components, level=4)
+    number_of_images = 10
+    pixel_depth = 24
+    out_image_dir = "../Output/"
+    percent = 50
+    height, width = 128, 128
+
+    try:
+        opts, args = getopt.getopt(argv, "hq:n:i:f:d:p:o:y:x:", ["qimage=", "nimages=", "idb=", "fdb=", "percent", "pdepth=", "opath=", "ydim=", "xdim="])
+    except getopt.GetoptError:
+        print 'python driver.py -q <query image name> -n <number of images to return> ' \
+              '-i <image database path> -f <feature vector database directory> ' \
+              '-d <image database path> -p <image pixel depth> -o <output image directory> ' \
+              '-y <rescaling height> -x <rescaling width>'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'python driver.py -q <query image name> -n <number of images to return> ' \
+              '-i <image database path> -f <feature vector database directory> ' \
+                  '-d <image database path> -p <image pixel depth> -o <output image directory>' \
+                  ' -y <rescaling height> -x <rescaling width>'
+            sys.exit()
+        elif opt in ("-q", "--qimage"):
+            query_image = arg
+        elif opt in ("-n", "--nimages"):
+            number_of_images = int(arg)
+        elif opt in ("-i", "--idb"):
+            image_db_dir = arg
+        elif opt in ("-f", "--fdb"):
+            feature_dir = arg
+        elif opt in ("-p", "--percent"):
+            percent = int(arg)
+        elif opt in ("-d", "--pdepth"):
+            width = int(arg)
+        elif opt in ("-o", "--opath"):
+            out_image_dir = arg
+        elif opt in ("-y", "--ydim"):
+            height = int(arg)
+        elif opt in ("-x", "--xdim"):
+            width = int(arg)
+    if width >= 256 and height >= 256:
+        level = 4
+    else:
+        level = 3
+    query_imagepath = image_db_dir + query_image
+
+    if gc.isenabled():
+        gc.disable()
+    start = time.time()
+
+    query_components = ops.preprocess(query_imagepath, width=width, height=height, bits_per_pixel=pixel_depth)
+    query_features = ops.form_feature_vector(query_components, level=level)
     query_std = query_features['std']
     query_wt = query_features['wt']
 
-    db_std = load_db_std()
-    percent = 60
+    db_std = setup.load_db_std(base_dir=feature_dir)
     first_matches = s.std_search(db_std, query_std, percent=percent)
-    print "number of matches on stage 1:", ' ', len(first_matches)
-    print first_matches
+    print "number of matches on stage 1:", ' ', len(first_matches), 'out of', len(db_std)
+    # print first_matches
 
-    # db_wt = load_db_wt()
-    db_wt = load_images_wt(first_matches)
+    db_wt = setup.load_images_wt(first_matches)
     distances = s.compute_distances(query_wt, db_wt)
-    matches = s.get_matches(distances, 100)
-    for imagename in matches:
-        imagepath = base_dir + imagename
+    matches = s.get_matches(distances, number_of_images)
+
+    end = time.time() - start
+    gc.enable()
+    print "Time taken to find matches: ", end
+
+    if os.path.exists(out_image_dir):
+        shutil.rmtree(out_image_dir)
+    os.makedirs(out_image_dir)
+    print "Best matches in order:"
+    ops.display_image(query_imagepath, 'Query_Image.jpg')
+    out_image_path = out_image_dir + 'Query_Image.jpg'
+    ops.save_image(out_image_path=out_image_path, imagename=query_image, db_base_dir=image_db_dir)
+    for i in range(len(matches)):
+        imagename = matches[i]
+        imagepath = image_db_dir + imagename
         print imagename
-        ops.display_image(imagepath, imagename)
+        frame_name = 'Match_' + str(i) + '.jpg'
+        ops.display_image(imagepath, frame_name)
+        out_image_path = out_image_dir + frame_name
+        ops.save_image(out_image_path=out_image_path, imagename=imagename, db_base_dir=image_db_dir)
 
 
 if __name__ == '__main__':
-    main()
+    if gc.isenabled():
+        gc.disable()
+    tic = time.time()
+    main(sys.argv[1:])
+    toc = time.time() - tic
+    print "Total interaction time: ", toc, " seconds"
+    gc.enable()

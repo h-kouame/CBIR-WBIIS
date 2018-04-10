@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import pywt
 from PIL import Image
+import os
 
 
 def load(path='../Data/image.orig - original/400.jpg'):
@@ -12,7 +13,7 @@ def load(path='../Data/image.orig - original/400.jpg'):
 def display(image, frame_name='image'):
     cv2.imshow(frame_name, image)
     cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
 
 
 def display_image(path, frame_name):
@@ -23,11 +24,17 @@ def display_image(path, frame_name):
 def display_component(component, name='component'):
     cv2.imshow(name, component)
     cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
 
 
 def save(image, path='../Output/out.jpg'):
     cv2.imwrite(path, image)
+
+
+def save_image(out_image_path, imagename="out.jpg", db_base_dir='../Data/image.orig - original/400.jpg'):
+    image_path = db_base_dir + imagename
+    image = load(image_path)
+    save(image, out_image_path)
 
 
 def rescale(image_in, width=256, height=256):
@@ -105,6 +112,7 @@ def image_from_array(data):
     return image
 
 
+# for debugging
 def main():
     image = load()
     # display(image)
