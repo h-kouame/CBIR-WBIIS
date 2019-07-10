@@ -91,6 +91,7 @@ def main(argv):
     width = 128
     # image_db_path = '../Data/image.orig - original/'
     image_db_path = '../Data/image.orig/'
+    # image_db_path = '../Data/image.vary.jpg/'
     out_wt_dir = '../Database/'
     pixel_depth = 24
     try:

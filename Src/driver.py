@@ -10,11 +10,13 @@ import gc
 
 
 def main(argv):
-    image_db_dir = '../Data/image.orig/'
     feature_dir = '../Database/'
+    image_db_dir = '../Data/image.orig/'
+    # image_db_dir = '../Data/image.vary.jpg/'
     # image_db_dir = '../Data/image.orig - original/'
-    query_image = '400.jpg'
-    number_of_images = 10
+
+    query_image = '0.jpg'
+    number_of_images = 100
     pixel_depth = 24
     out_image_dir = "../Output/"
     percent = 50
@@ -76,7 +78,11 @@ def main(argv):
     db_wt = setup.load_images_wt(first_matches)
     distances = s.compute_distances(query_wt, db_wt)
     matches = s.get_matches(distances, number_of_images)
-
+    counter = 0
+    for match in matches:
+        if -1 < int(match[:-4]) < 100:
+            counter = counter + 1
+    print "accuracy ", 100*counter/100.0
     end = time.time() - start
     gc.enable()
     print "Time taken to find matches: ", end
@@ -88,6 +94,7 @@ def main(argv):
     ops.display_image(query_imagepath, 'Query_Image.jpg')
     out_image_path = out_image_dir + 'Query_Image.jpg'
     ops.save_image(out_image_path=out_image_path, imagename=query_image, db_base_dir=image_db_dir)
+    print matches
     for i in range(len(matches)):
         imagename = matches[i]
         imagepath = image_db_dir + imagename
