@@ -1,3 +1,7 @@
 .idea/
 venv/
 Data/
+Output/
+*.pyc
+Src.zip
+Database/
